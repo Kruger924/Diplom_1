@@ -41,8 +41,8 @@ class TestBurger:
         database = Database()
         burger.set_buns(database.available_buns()[1])
         burger.add_ingredient(database.available_ingredients()[0])
-        burger.add_ingredient(database.available_ingredients()[2])
-        assert burger.get_price() == 800.0
+        burger.add_ingredient(database.available_ingredients()[4])
+        assert burger.get_price() == 700.0
 
     """ Тест на получение чека """
     def test_get_receipt(self):
@@ -50,10 +50,10 @@ class TestBurger:
         database = Database()
         burger.set_buns(database.available_buns()[1])
         burger.add_ingredient(database.available_ingredients()[0])
-        burger.add_ingredient(database.available_ingredients()[2])
+        burger.add_ingredient(database.available_ingredients()[4])
         expected_receipt = "(==== white bun ====)\n"\
                            "= sauce hot sauce =\n"\
-                           "= filling chili sauce =\n"\
+                           "= filling dinosaur =\n"\
                            "(==== white bun ====)\n\n"\
-                           "Price: 800"
+                           "Price: 700"
         assert expected_receipt == burger.get_receipt()
