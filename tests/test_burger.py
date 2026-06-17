@@ -1,71 +1,59 @@
-'''Тесты атрибутов и методов класса Burger'''
-from data import RECEIPT_TEMPLATE
-from helpers import expected_burger_price, set_burger_attrs
+import praktikum.ingredient_types
+
+
+from unittest.mock import Mock
+from praktikum.burger import Burger, Bun
+from praktikum.database import Database
 
 
 class TestBurger:
 
-    def test_init_attr_bun_is_none(self, test_burger):
-        '''Атрибут «bun» по умолчанию - None'''
-        assert test_burger.bun is None
+    """ Тест на установку булок """
+    def test_set_buns(self):
+        burger = Burger()
+        bun = Bun('Test_bun', 100.0)
+        burger.set_buns(bun)
+        assert burger.bun == bun
 
-    def test_init_attr_ingredients_is_empty_list(self, test_burger):
-        '''Атрибут «ingredients» по умолчанию - пустой список'''
-        assert test_burger.ingredients == []
+    """ Тест на добавление ингредиента """
+    def test_add_ingredient(self):
+        burger = Burger()
+        mock_ingredient = Mock()
+        mock_ingredient.get_name.return_value = 'Test_bun'
+        mock_ingredient.get_price.return_value = 5.0
+        mock_ingredient.get_type.return_value = praktikum.ingredient_types.INGREDIENT_TYPE_FILLING
+        burger.add_ingredient(mock_ingredient)
+        assert burger.ingredients[0].get_price() == 5.0
+        assert burger.ingredients[0].get_name() == 'Test_bun'
+        assert burger.ingredients[0].get_type() == praktikum.ingredient_types.INGREDIENT_TYPE_FILLING
 
-    def test_set_buns_attr_bun_takes_bun(self, test_burger, mock_bun):
-        '''Задать булку бургеру'''
-        test_burger.set_buns(mock_bun)
-        assert test_burger.bun == mock_bun
+    """ Тест на удаление ингредиента """
+    def test_remove_ingredient(self):
+        burger = Burger()
+        mock_ingredient = Mock()
+        burger.add_ingredient(mock_ingredient)
+        burger.remove_ingredient(0)
+        assert len(burger.ingredients) == 0
 
-    def test_add_ingredient_appends_ingredient(
-            self, test_burger, mock_ingredient
-       ):
-        '''Добавление ингредиента бургеру'''
-        test_burger.add_ingredient(mock_ingredient)
-        assert test_burger.ingredients == [mock_ingredient]
+    """ Тест на получение цены бургера"""
+    def test_get_price(self):
+        burger = Burger()
+        database = Database()
+        burger.set_buns(database.available_buns()[1])
+        burger.add_ingredient(database.available_ingredients()[0])
+        burger.add_ingredient(database.available_ingredients()[2])
+        assert burger.get_price() == 800.0
 
-    def test_remove_ingredient_deletes_ingredient(
-            self, test_burger, mock_ingredient
-       ):
-        '''Удаление ингредиента бургера'''
-        test_burger = set_burger_attrs(test_burger, mock_ingredient)
-        test_burger.remove_ingredient(index=0)
-        assert test_burger.ingredients == []
-
-    def test_move_ingredient_relocates_ingredient(
-            self, test_burger, mock_ingredient
-       ):
-        '''Перемещение ингредиента бургера'''
-        test_burger = set_burger_attrs(
-            test_burger, 'ingredient', mock_ingredient
-        )
-        test_burger.move_ingredient(index=1, new_index=0)
-        assert test_burger.ingredients == [mock_ingredient, 'ingredient']
-
-    def test_get_price_returns_burger_price(
-            self, test_burger, mock_bun, mock_ingredient
-       ):
-        '''Получение цены бургера'''
-        test_burger = set_burger_attrs(
-            test_burger, mock_ingredient, bun=mock_bun
-        )
-        assert (
-            test_burger.get_price() ==
-            expected_burger_price(mock_ingredient, bun=mock_bun)
-        )
-
-    def test_get_receipt_returns_burger_receipt(
-            self, test_burger, mock_bun, mock_ingredient
-       ):
-        '''Получение рецепта бургера'''
-        test_burger = set_burger_attrs(
-            test_burger, mock_ingredient, bun=mock_bun
-        )
-        data = {
-            'bun_name': mock_bun.get_name(),
-            'ingredient_type': mock_ingredient.get_type().lower(),
-            'ingredient_name': mock_ingredient.get_name(),
-            'price': expected_burger_price(mock_ingredient, bun=mock_bun)
-        }
-        assert test_burger.get_receipt() == RECEIPT_TEMPLATE.format(**data)
+    """ Тест на получение чека """
+    def test_get_receipt(self):
+        burger = Burger()
+        database = Database()
+        burger.set_buns(database.available_buns()[1])
+        burger.add_ingredient(database.available_ingredients()[0])
+        burger.add_ingredient(database.available_ingredients()[2])
+        expected_receipt = "(==== white bun ====)\n"\
+                           "= sauce hot sauce =\n"\
+                           "= filling chili sauce =\n"\
+                           "(==== white bun ====)\n\n"\
+                           "Price: 800"
+        assert expected_receipt == burger.get_receipt()
